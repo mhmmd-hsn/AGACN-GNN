@@ -1,15 +1,12 @@
 from  data_loader import EEGDataLoader
-from connections import GMatrixCalculator
-from visualization import Visualization
 from AGACN import AGACN
-# from trainer import ModelTrainer
-from torch.utils.data import Dataset, DataLoader
 from trainer import Trainer
-import torch
+
+
 
 if __name__ == '__main__':
 
-    dataset = EEGDataLoader("Processed_Data", "AK-SREP", "reading")
+    dataset = EEGDataLoader("Processed_Data_", "AK-SREP", "reading")
 
     # vis = Visualization()
     # vis.plot_dataset_trials

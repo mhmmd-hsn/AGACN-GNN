@@ -27,13 +27,14 @@ class EEGDataLoader(Dataset):
         self.data, self.labels = self.get_trials(class_type = class_type, trial_type = trial_type)
 
 
-    def load_eeg_data(self, csv_file: str):
+    def load_eeg_data(self, parquet_file: str):
         """
         Loads EEG data from a CSV file.
         :param csv_file: Path to the CSV file.
         :return: Pandas DataFrame of EEG data.
         """
-        df = pd.read_csv(csv_file)
+        df = pd.read_parquet(parquet_file)
+        # df = pd.read_csv(csv_file)
         return df
 
     def _downsample(self, data, factor=2):
@@ -153,7 +154,7 @@ class EEGDataLoader(Dataset):
         all_labels = []
 
         for session in tqdm(self.sessions, desc="Processing Sessions"):
-            eeg_files = list(session.glob("*.csv"))
+            eeg_files = list(session.glob("*.parquet"))
             for eeg_file in eeg_files:
                 # print(eeg_file)
                 df = self.load_eeg_data(str(eeg_file))
