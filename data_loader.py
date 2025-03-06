@@ -170,6 +170,8 @@ class EEGDataLoader(Dataset):
         downsampled_data = self._downsample(filtered_data)
         normalized_data = self._min_max_normalization_per_signal(downsampled_data)
 
+        print(f"dataset shape: {normalized_data.shape}, labels shape: {all_labels.shape}")
+
         return normalized_data, all_labels
 
     def __getitem__(self, idx):

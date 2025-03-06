@@ -79,7 +79,8 @@ class Visualization:
         ax1.legend(loc='upper right')
         ax2.legend(loc='lower right')
         plt.title("Training and Validation Loss & Accuracy")
-        plt.show()
+        # plt.show()
+        plt.savefig("loss_accuracy_curve.png")
     
     def plot_roc_curve(self, y_true, y_pred_proba, num_classes):
         """ Plots ROC curve for multi-class classification """
@@ -93,7 +94,8 @@ class Visualization:
         plt.ylabel("True Positive Rate")
         plt.title("ROC Curves for Multi-class Classification")
         plt.legend()
-        plt.show()
+        # plt.show()
+        plt.savefig("roc_curve.png")
     
     def plot_confusion_matrix(self, y_true, y_pred, class_names):
         """ Plots confusion matrix """
@@ -103,7 +105,8 @@ class Visualization:
         plt.xlabel("Predicted Label")
         plt.ylabel("True Label")
         plt.title("Confusion Matrix")
-        plt.show()
+        # plt.show()
+        plt.savefig("confusion_matrix.png")
     
     def print_classification_report(self, y_true, y_pred, class_names):
         """ Prints a detailed classification report """
