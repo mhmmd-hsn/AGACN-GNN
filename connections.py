@@ -7,8 +7,8 @@ class GMatrixCalculator:
     def __init__(self):
         """Initializes the GMatrixCalculator class."""
         pass
-    
-    def _compute_G_matrix(self, trial_data):
+    @staticmethod
+    def _compute_G_matrix(trial_data):
         """Computes the Pearson correlation matrix G for each trial and applies thresholding."""
         num_channels = trial_data.shape[0]
         G = np.corrcoef(trial_data)

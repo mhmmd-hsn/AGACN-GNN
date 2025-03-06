@@ -1,26 +1,25 @@
-from  load_data import EEGDataLoader
+from  data_loader import EEGDataLoader
 from connections import GMatrixCalculator
 from visualization import Visualization
-# from AGACN import AdaptiveGraphAttentionConvNet
+from AGACN import AGACN
 # from trainer import ModelTrainer
-
+from torch.utils.data import Dataset, DataLoader
+from trainer import Trainer
+import torch
 
 if __name__ == '__main__':
-    eeg_loader = EEGDataLoader('Data')
-    all_trials = eeg_loader.get_all_trials('SREP')
-    listening_data = all_trials['listening']
-    print(listening_data.shape)
 
-    # Compute G matrices
-    g_calculator = GMatrixCalculator()
-    listening_G_matrices = g_calculator.compute_G_matrices(listening_data)
-    print(listening_G_matrices[0])  # (samples, 12, 12)
+    dataset = EEGDataLoader("Data", "AK-SREP", "reading")
 
-    # Visualize trial and G matrix
-    visualization = Visualization()
-    visualization.plot_trial_and_G_matrix(listening_data[0], listening_G_matrices[0], 1)
+    vis = Visualization()
+    vis.plot_dataset_trials
 
-    # model = AdaptiveGraphAttentionConvNet(in_channels=12, hidden_dim=32, num_classes=9, num_nodes=12)
 
-    # trainer = ModelTrainer(model, data, labels)
+    # model = AGACN(num_timepoints=2000, num_classes=9)
+    # model.count_parameters()
+    # trainer = Trainer(model, dataset, lr=0.0001, epochs=500, batch_size=80, num_folds=5)
+
     # trainer.train()
+    # torch.save(model, 'model_full.pth')
+    # trainer.validate()
+
