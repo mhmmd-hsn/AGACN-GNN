@@ -18,8 +18,6 @@ class Visualization:
         Plots EEG electrode positions and connectivity using MNE's built-in head model.
         """
         num_channels = len(node_labels)
-        
-        # Get standard EEG positions (10-20 system)
         montage = mne.channels.make_standard_montage("standard_1020")
         pos_dict = montage.get_positions()['ch_pos']
         
@@ -31,31 +29,26 @@ class Visualization:
         node_sizes = (node_sizes - node_sizes.min()) / (node_sizes.max() - node_sizes.min() + 1e-6) * 10  # Normalize
         
 
-        # Plot EEG topomap (activity distribution)
-        mne.viz.plot_topomap(node_sizes, xy_positions, cmap='coolwarm', contours=0, show=False)
 
-        # Add channel labels manually
+        mne.viz.plot_topomap(node_sizes, xy_positions, cmap='coolwarm', contours=0, show=False)
         for i, label in enumerate(node_labels):
             plt.text(xy_positions[i, 0], xy_positions[i, 1], label, fontsize=9, ha='center', va='center', color='black')
-
-        # Create a graph for EEG connectivity
         G = nx.Graph()
         
-        # Add nodes with positions
         for i, label in enumerate(node_labels):
             G.add_node(label, pos=xy_positions[i])
 
-        # Add edges based on adjacency matrix
+        
         for i in range(num_channels):
-            for j in range(i + 1, num_channels):  # Avoid duplicate edges
+            for j in range(i + 1, num_channels):  
                 weight = adjacency_matrix[i, j]
-                if weight > threshold:  # Only add strong connections
+                if weight > threshold:  
                     G.add_edge(node_labels[i], node_labels[j], weight=weight)
 
         # Overlay connectivity graph
         pos = nx.get_node_attributes(G, 'pos')
         edges = G.edges(data=True)
-        edge_widths = [d['weight'] * 2 for (u, v, d) in edges]  # Scale edge thickness
+        edge_widths = [d['weight'] * 2 for (u, v, d) in edges]  
         nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color='red', alpha=0.8)
 
         plt.show()
@@ -112,3 +105,5 @@ class Visualization:
         """ Prints a detailed classification report """
         report = classification_report(y_true, y_pred, target_names=class_names)
         print("Classification Report:\n", report)
+
+

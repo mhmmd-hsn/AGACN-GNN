@@ -8,11 +8,8 @@ from connections import GMatrixCalculator
 from torch.utils.data import Dataset
 
 class EEGDataLoader(Dataset):
-    def __init__(self, root_path: str, class_type, trial_type):
-        """
-        Initializes the EEGDataLoader class.
-        :param root_path: Path to the root directory containing all session folders.
-        """
+    def __init__(self, root_path: str, class_type, trial_type):        
+        
         self.root_path = Path(root_path)
         self.sessions = [d for d in sorted(self.root_path.iterdir()) if d.is_dir()]
 
@@ -28,11 +25,6 @@ class EEGDataLoader(Dataset):
 
 
     def load_eeg_data(self, parquet_file: str):
-        """
-        Loads EEG data from a CSV file.
-        :param csv_file: Path to the CSV file.
-        :return: Pandas DataFrame of EEG data.
-        """
         df = pd.read_parquet(parquet_file)
         # df = pd.read_csv(csv_file)
         return df
@@ -76,7 +68,6 @@ class EEGDataLoader(Dataset):
         # Avoid division by zero
         data_range[data_range == 0] = 1
 
-        # Normalize each signal independently
         normalized_data = (data - data_min) / data_range
         normalized_data = normalized_data * (max_val - min_val) + min_val
 
@@ -98,34 +89,31 @@ class EEGDataLoader(Dataset):
         trials = []
         labels = []
 
-        # Choose the correct event code based on trial type
         start_event = 21 if trial_type == "reading" else 30
 
-        # Get event indices and values
         event_indices = event_column[event_column.notna()].index.tolist()
         event_values = event_column.dropna().values
 
         for i in range(len(event_values)):
-            if event_values[i] == start_event:  # Start of a trial (21 for reading, 30 for speaking)
+            if event_values[i] == start_event:  
                 if i == 0:
                     continue  # No previous event to use as label
                 if trial_type == "reading":
-                    label = event_values[i - 1]  # The event before start_event is the label
+                    label = event_values[i - 1]  
                 else:
                     label = event_values[i - 3]
                     
-                start_idx = event_indices[i]  # Trial start index
+                start_idx = event_indices[i]  
 
-                # Ensure there is a next event to define the end
                 if i + 1 < len(event_indices):
                     end_idx = event_indices[i + 1]
                 else:
                     continue
 
-                # Extract EEG data for the selected electrodes
-                trial_data = df.loc[start_idx:end_idx, selected_electrodes].values.T  # Transpose to (channels, time_samples)
+                
+                trial_data = df.loc[start_idx:end_idx, selected_electrodes].values.T  
 
-                # Ensure consistent shape
+                
                 current_samples = trial_data.shape[1]
 
                 if current_samples < target_samples:
@@ -156,17 +144,14 @@ class EEGDataLoader(Dataset):
         for session in tqdm(self.sessions, desc="Processing Sessions"):
             eeg_files = list(session.glob("*.parquet"))
             for eeg_file in eeg_files:
-                # print(eeg_file)
                 df = self.load_eeg_data(str(eeg_file))
                 trials, labels = self.extract_trials(df, class_type=class_type, trial_type=trial_type)
                 all_trials.extend(trials)
                 all_labels.extend(labels)
 
-        # Convert lists to NumPy arrays
         all_trials = np.array(all_trials)
         all_labels = np.array(all_labels)
 
-        # Apply filtering, downsampling, and normalization
         filtered_data = self._butterworth_lowpass_filter(all_trials, cutoff=50)
         downsampled_data = self._downsample(filtered_data)
         normalized_data = self._min_max_normalization_per_signal(downsampled_data)
@@ -184,18 +169,8 @@ class EEGDataLoader(Dataset):
         return feature_matrix, adjacency_matrix, label - 1
     
     def __len__(self):
-        reading_data, reading_labels = self.get_trials(class_type="AK-SREP", trial_type="reading")
-        return reading_data.shape[0]
+        return self.data.shape[0]
     
-
-
 if __name__ == '__main__':
-    dataset = EEGDataLoader("Data")
-
-    # # Extract reading trials
-    # reading_data, reading_labels = dataset.get_trials(class_type="AK-SREP", trial_type="reading")
-    # print(f"Reading Trials - EEG Data Shape: {reading_data.shape}, Labels Shape: {reading_labels.shape}")
-
-    # Extract speaking trials
-    # speaking_data, speaking_labels = loader.get_trials(class_type="AK-SREP", trial_type="speaking")
-    # print(f"Speaking Trials - EEG Data Shape: {speaking_data.shape}, Labels Shape: {speaking_labels.shape}")
+    
+    dataset = EEGDataLoader("Processed_Data_", "AK-SREP", "reading")

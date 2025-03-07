@@ -7,9 +7,8 @@ class AGACNCell(nn.Module):
         super(AGACNCell, self).__init__()
         self.weight = nn.Parameter(torch.randn(in_features, out_features))
         self.bias = nn.Parameter(torch.zeros(out_features)) if use_bias else None
-        self.dropout = nn.Dropout(dropout)  # Apply dropout
+        self.dropout = nn.Dropout(dropout)  
         
-        # Set activation function dynamically
         if activation == 'relu':
             self.activation = F.relu
         elif activation == 'tanh':
@@ -18,15 +17,15 @@ class AGACNCell(nn.Module):
             raise ValueError("Invalid activation function. Use 'relu' or 'tanh'.")
 
     def forward(self, feature_matrix, adjacency_matrix):
-        # Graph Convolution
+        
         out = torch.matmul(adjacency_matrix, feature_matrix)
         out = torch.matmul(out, self.weight)
 
         if self.bias is not None:  
             out += self.bias
 
-        out = self.dropout(out)  # Apply dropout
-        return self.activation(out)  # Apply correct activation function
+        out = self.dropout(out)
+        return self.activation(out)  
 
 class AGACN(nn.Module):
     def __init__(self, num_timepoints=2500, num_classes=4):
@@ -37,7 +36,6 @@ class AGACN(nn.Module):
         self.agacn2 = AGACNCell(126, 64, activation='tanh')  
         self.agacn3 = AGACNCell(64, 132, activation='relu')
 
-        # Fully Connected Layer + Softmax
         self.fc = nn.Linear(64 * 132, num_classes)
 
 
@@ -72,4 +70,3 @@ class AGACN(nn.Module):
         # Fully Connected Layer
         out = self.fc(cfa_out)
         return F.log_softmax(out, dim=1)
-
