@@ -39,9 +39,9 @@ class Trainer:
             train_loader = DataLoader(train_subset, batch_size=self.batch_size, shuffle=True)
             val_loader = DataLoader(val_subset, batch_size=self.batch_size, shuffle=False)
 
-            # self.model = self.model.__class__()  
+            self.model = self.model.__class__(num_timepoints=self.model.agacn1.weight.shape[0], num_classes=self.model.fc.out_features)
             # # self.model.load_state_dict(self.model.state_dict())  
-            # self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, weight_decay=0.0005)
+            self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, weight_decay=0.0005)
             
             fold_train_losses, fold_train_accs = [], []
             fold_val_losses, fold_val_accs = [], []
