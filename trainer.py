@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, Subset
 import numpy as np
 from visualization import Visualization
 from sklearn.metrics import confusion_matrix
+import pandas as pd
 
 class Trainer:
     def __init__(self, model, dataset, lr=0.0001, epochs=500, batch_size=80, num_folds=5, save_best=True, save_path="best_model.pth"):
@@ -24,7 +25,9 @@ class Trainer:
         self.all_labels = []
         self.all_probs = []  # Store probabilities for ROC curve
         self.best_fold_metrics = None  # Store the best fold's metrics
-    
+        self.best_metrics = None  # Store the best fold's metrics
+        self.best_results = pd.DataFrame(columns=["fold Number", "Train Accuracy", "Valid Accuracy", "Epoch Number"])
+
     def train(self):
         kf = KFold(n_splits=self.num_folds, shuffle=True, random_state=42)
 
@@ -35,6 +38,10 @@ class Trainer:
             val_subset = Subset(self.dataset, val_idx)
             train_loader = DataLoader(train_subset, batch_size=self.batch_size, shuffle=True)
             val_loader = DataLoader(val_subset, batch_size=self.batch_size, shuffle=False)
+
+            # self.model = self.model.__class__()  
+            # # self.model.load_state_dict(self.model.state_dict())  
+            # self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, weight_decay=0.0005)
             
             fold_train_losses, fold_train_accs = [], []
             fold_val_losses, fold_val_accs = [], []
@@ -69,19 +76,29 @@ class Trainer:
                 
                 if self.save_best and val_acc > best_fold_epoch_acc:
                     best_fold_epoch_acc = val_acc
+                    self.best_metrics = [fold+1, train_acc, val_acc, epoch]
                     torch.save(self.model.state_dict(), f'best_model_fold{fold+1}.pth')
                 
                 if self.save_best and val_acc > self.best_acc:
                     self.best_acc = val_acc
                     torch.save(self.model.state_dict(), self.save_path)
                     self.best_fold_metrics = (fold_train_losses, fold_train_accs, fold_val_losses, fold_val_accs)
-        
-        if self.best_fold_metrics:
-            self.visualizer.plot_loss_accuracy(*self.best_fold_metrics)
-            
 
-        self.plot_confusion_matrix()
-        self.plot_roc_curve()
+            if self.best_metrics:
+                self.best_results = self.add_row(self.best_metrics)
+        
+
+        column_means = self.best_results.drop(columns=["fold Number"]).mean()
+        average_row = pd.DataFrame([["Average"] + column_means.tolist()], columns=self.best_results.columns)
+        self.best_results = pd.concat([self.best_results, average_row], ignore_index=True)
+        print(self.best_results)
+
+
+
+        # if self.best_fold_metrics:
+        #     self.visualizer.plot_loss_accuracy(*self.best_fold_metrics)
+        # self.plot_confusion_matrix()
+        # self.plot_roc_curve()
 
     def validate(self, val_loader):
         self.model.eval()
@@ -119,3 +136,7 @@ class Trainer:
         class_names = self.model.fc.out_features
         self.visualizer.plot_roc_curve(np.array(self.all_labels), np.array(self.all_probs), class_names)
         
+    def add_row(self, data):
+        new_row = pd.DataFrame([data], columns=self.best_results.columns)  # Create a new DataFrame row
+        df = pd.concat([self.best_results, new_row], ignore_index=True)  # Append to the DataFrame
+        return df

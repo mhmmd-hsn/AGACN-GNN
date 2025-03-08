@@ -3,10 +3,9 @@ from AGACN import AGACN
 from trainer import Trainer
 
 
-
 if __name__ == '__main__':
 
-    dataset = EEGDataLoader("Processed_Data_", "AK-SREP", "reading")
+    dataset = EEGDataLoader("D:\Work\MachineLearning\Projects\DRAFT\Processed_Data_", "AK-SREP", "reading")
 
     model = AGACN(num_timepoints=2000, num_classes=9)
     model.count_parameters()
