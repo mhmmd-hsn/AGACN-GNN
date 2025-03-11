@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
 from torch.utils.data import DataLoader, Subset
 import numpy as np
 from visualization import Visualization
@@ -29,9 +29,10 @@ class Trainer:
         self.best_results = pd.DataFrame(columns=["fold Number", "Train Accuracy", "Valid Accuracy", "Epoch Number"])
 
     def train(self):
-        kf = KFold(n_splits=self.num_folds, shuffle=True, random_state=42)
+        # kf = KFold(n_splits=self.num_folds, shuffle=True, random_state=42)
+        skf = StratifiedKFold(n_splits=self.num_folds, shuffle=True, random_state=42)
 
-        for fold, (train_idx, val_idx) in enumerate(kf.split(range(len(self.dataset)))):
+        for fold, (train_idx, val_idx) in enumerate(skf.split(self.dataset.data, self.dataset.labels)):
             print(f"\nFold {fold + 1}/{self.num_folds}")
             
             train_subset = Subset(self.dataset, train_idx)
