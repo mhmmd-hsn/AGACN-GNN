@@ -5,8 +5,9 @@ from sklearn.model_selection import KFold, StratifiedKFold
 from torch.utils.data import DataLoader, Subset
 import numpy as np
 from visualization import Visualization
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 import pandas as pd
+
 
 class Trainer:
     def __init__(self, model, dataset, lr=0.0001, epochs=500, batch_size=80, num_folds=5, save_best=True, save_path="best_model.pth"):
@@ -61,6 +62,7 @@ class Trainer:
                     train_loss += loss.item()
                     
                     pred = output.argmax(dim=1)
+                    
                     correct += (pred == labels).sum().item()
                     total += labels.size(0)
                     
@@ -114,19 +116,20 @@ class Trainer:
                 
                 probs = torch.exp(output)  # Convert log-softmax back to normal probabilities
                 pred = probs.argmax(dim=1)
-                
-                correct += (pred == labels).sum().item()
-                total += labels.size(0)
+               
+                # correct += (pred == labels).sum().item()
+                # total += labels.size(0)
                 
                 all_preds.extend(pred.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
                 all_probs.extend(probs.cpu().numpy())
+
         
         self.all_preds.extend(all_preds)
         self.all_labels.extend(all_labels)
         self.all_probs.extend(all_probs)
         
-        return val_loss / len(val_loader), correct / total, all_preds, all_labels, all_probs
+        return val_loss / len(val_loader), accuracy_score(all_labels, all_preds), all_preds, all_labels, all_probs
 
     def plot_confusion_matrix(self):
         class_names = [str(i) for i in range(self.model.fc.out_features)]  # Assuming classification labels
