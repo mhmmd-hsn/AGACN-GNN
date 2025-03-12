@@ -69,4 +69,4 @@ class AGACN(nn.Module):
 
         # Fully Connected Layer
         out = self.fc(cfa_out)
-        return F.log_softmax(out, dim=1)
+        return out

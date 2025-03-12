@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, Subset
 import numpy as np
 from visualization import Visualization
@@ -24,9 +24,7 @@ class Trainer:
         self.visualizer = Visualization()
         self.all_preds = []
         self.all_labels = []
-        self.all_probs = []  # Store probabilities for ROC curve
         self.best_fold_metrics = None  # Store the best fold's metrics
-        self.best_metrics = None  # Store the best fold's metrics
         self.best_results = pd.DataFrame(columns=["fold Number", "Train Accuracy", "Valid Accuracy", "Epoch Number"])
 
     def train(self):
@@ -42,7 +40,6 @@ class Trainer:
             val_loader = DataLoader(val_subset, batch_size=self.batch_size, shuffle=False)
 
             self.model = self.model.__class__(num_timepoints=self.model.agacn1.weight.shape[0], num_classes=self.model.fc.out_features)
-            # # self.model.load_state_dict(self.model.state_dict())  
             self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, weight_decay=0.0005)
             
             fold_train_losses, fold_train_accs = [], []
@@ -50,7 +47,8 @@ class Trainer:
             best_fold_epoch_acc = 0
             
             for epoch in range(self.epochs):
-                train_loss, correct, total = 0, 0, 0
+                train_loss = 0
+                all_train_preds, all_train_labels = [], []
                 self.model.train()
                 
                 for feature_matrix, adjacency_matrix, labels in train_loader:
@@ -62,13 +60,12 @@ class Trainer:
                     train_loss += loss.item()
                     
                     pred = output.argmax(dim=1)
+                    all_train_preds.extend(pred.cpu().numpy())
+                    all_train_labels.extend(labels.cpu().numpy())
                     
-                    correct += (pred == labels).sum().item()
-                    total += labels.size(0)
-                    
-                train_acc = correct / total
-                val_loss, val_acc, preds, labels, probs = self.validate(val_loader)
-                
+                train_acc = accuracy_score(all_train_labels, all_train_preds)    
+                val_loss, val_acc, preds, labels = self.validate(val_loader)
+
                 fold_train_losses.append(train_loss / len(train_loader))
                 fold_train_accs.append(train_acc)
                 fold_val_losses.append(val_loss)
@@ -80,11 +77,11 @@ class Trainer:
                 if self.save_best and val_acc > best_fold_epoch_acc:
                     best_fold_epoch_acc = val_acc
                     self.best_metrics = [fold+1, train_acc, val_acc, epoch]
-                    torch.save(self.model.state_dict(), f'best_model_fold{fold+1}.pth')
+                    # torch.save(self.model.state_dict(), f'best_model_fold{fold+1}.pth')
                 
                 if self.save_best and val_acc > self.best_acc:
                     self.best_acc = val_acc
-                    torch.save(self.model.state_dict(), self.save_path)
+                    # torch.save(self.model.state_dict(), self.save_path)
                     self.best_fold_metrics = (fold_train_losses, fold_train_accs, fold_val_losses, fold_val_accs)
 
             if self.best_metrics:
@@ -105,41 +102,25 @@ class Trainer:
 
     def validate(self, val_loader):
         self.model.eval()
-        val_loss, correct, total = 0, 0, 0
-        all_preds, all_labels, all_probs = [], [], []
+        val_loss = 0
+        all_preds, all_labels = [], []
         
         with torch.no_grad():
             for feature_matrix, adjacency_matrix, labels in val_loader:
-                output = self.model(feature_matrix, adjacency_matrix)
+                output = self.model(feature_matrix, adjacency_matrix)  # Keep raw logits
                 loss = self.criterion(output, labels)
                 val_loss += loss.item()
                 
-                probs = torch.exp(output)  # Convert log-softmax back to normal probabilities
-                pred = probs.argmax(dim=1)
-               
-                # correct += (pred == labels).sum().item()
-                # total += labels.size(0)
+                pred = output.argmax(dim=1)
                 
                 all_preds.extend(pred.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
-                all_probs.extend(probs.cpu().numpy())
-
-        
+                
         self.all_preds.extend(all_preds)
         self.all_labels.extend(all_labels)
-        self.all_probs.extend(all_probs)
         
-        return val_loss / len(val_loader), accuracy_score(all_labels, all_preds), all_preds, all_labels, all_probs
+        return val_loss / len(val_loader), accuracy_score(all_labels, all_preds), all_preds, all_labels
 
-    def plot_confusion_matrix(self):
-        class_names = [str(i) for i in range(self.model.fc.out_features)]  # Assuming classification labels
-        self.visualizer.plot_confusion_matrix(self.all_labels, self.all_preds, class_names)
-        
-    
-    def plot_roc_curve(self):
-        class_names = self.model.fc.out_features
-        self.visualizer.plot_roc_curve(np.array(self.all_labels), np.array(self.all_probs), class_names)
-        
     def add_row(self, data):
         new_row = pd.DataFrame([data], columns=self.best_results.columns)  # Create a new DataFrame row
         df = pd.concat([self.best_results, new_row], ignore_index=True)  # Append to the DataFrame
