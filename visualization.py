@@ -52,58 +52,30 @@ class Visualization:
         nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color='red', alpha=0.8)
 
         plt.show()
-
-    
-    def plot_loss_accuracy(self, train_losses, val_losses, train_accs, val_accs):
-        """ Plots training & validation loss and accuracy """
-        epochs = range(1, len(train_losses) + 1)
-        
-        fig, ax1 = plt.subplots(figsize=(10, 5))
-        ax2 = ax1.twinx()
-        
-        ax1.plot(epochs, train_losses, 'b-', label='Train Loss')
-        ax1.plot(epochs, val_losses, 'r-', label='Val Loss')
-        ax2.plot(epochs, train_accs, 'b--', label='Train Acc')
-        ax2.plot(epochs, val_accs, 'r--', label='Val Acc')
-        
-        ax1.set_xlabel('Epochs')
-        ax1.set_ylabel('Loss')
-        ax2.set_ylabel('Accuracy')
-        ax1.legend(loc='upper right')
-        ax2.legend(loc='lower right')
-        plt.title("Training and Validation Loss & Accuracy")
-        # plt.show()
-        plt.savefig("loss_accuracy_curve.png")
-    
-    def plot_roc_curve(self, y_true, y_pred_proba, num_classes):
-        """ Plots ROC curve for multi-class classification """
-        plt.figure(figsize=(8, 6))
-        for i in range(num_classes):
-            fpr, tpr, _ = roc_curve(y_true == i, y_pred_proba[:, i])
-            plt.plot(fpr, tpr, label=f'Class {i} (AUC = {auc(fpr, tpr):.2f})')
-        
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("ROC Curves for Multi-class Classification")
+    def plot_loss(self, train_losses, val_losses):
+        """
+        Plots the training and validation loss over epochs.
+        """
+        plt.figure(figsize=(10, 5))
+        plt.plot(train_losses, label='Train Loss', marker='o')
+        plt.plot(val_losses, label='Validation Loss', marker='s')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.title('Training and Validation Loss Over Epochs')
         plt.legend()
-        # plt.show()
-        plt.savefig("roc_curve.png")
-    
-    def plot_confusion_matrix(self, y_true, y_pred, class_names):
-        """ Plots confusion matrix """
-        cm = confusion_matrix(y_true, y_pred)
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
-        plt.xlabel("Predicted Label")
-        plt.ylabel("True Label")
-        plt.title("Confusion Matrix")
-        # plt.show()
-        plt.savefig("confusion_matrix.png")
-    
-    def print_classification_report(self, y_true, y_pred, class_names):
-        """ Prints a detailed classification report """
-        report = classification_report(y_true, y_pred, target_names=class_names)
-        print("Classification Report:\n", report)
+        plt.grid()
+        plt.show()
 
-
+    def plot_accuracy(self, train_accs, val_accs):
+        """
+        Plots the training and validation accuarcy over epochs.
+        """
+        plt.figure(figsize=(10, 5))
+        plt.plot(train_accs, label='Train acc', marker='o')
+        plt.plot(val_accs, label='Validation acc', marker='s')
+        plt.xlabel('Epochs')
+        plt.ylabel('accuracy')
+        plt.title('Training and Validation accuracy Over Epochs')
+        plt.legend()
+        plt.grid()
+        plt.show()

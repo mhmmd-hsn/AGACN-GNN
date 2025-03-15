@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, Subset
-import numpy as np
 from visualization import Visualization
 from sklearn.metrics import confusion_matrix, accuracy_score
 import pandas as pd
@@ -28,7 +27,6 @@ class Trainer:
         self.best_results = pd.DataFrame(columns=["fold Number", "Train Accuracy", "Valid Accuracy", "Epoch Number"])
 
     def train(self):
-        # kf = KFold(n_splits=self.num_folds, shuffle=True, random_state=42)
         skf = StratifiedKFold(n_splits=self.num_folds, shuffle=True, random_state=42)
 
         for fold, (train_idx, val_idx) in enumerate(skf.split(self.dataset.data, self.dataset.labels)):
@@ -59,7 +57,7 @@ class Trainer:
                     self.optimizer.step()
                     train_loss += loss.item()
                     
-                    pred = output.argmax(dim=1)
+                    pred = torch.argmax(output, dim=-1)
                     all_train_preds.extend(pred.cpu().numpy())
                     all_train_labels.extend(labels.cpu().numpy())
                     
@@ -77,28 +75,22 @@ class Trainer:
                 if self.save_best and val_acc > best_fold_epoch_acc:
                     best_fold_epoch_acc = val_acc
                     self.best_metrics = [fold+1, train_acc, val_acc, epoch]
-                    # torch.save(self.model.state_dict(), f'best_model_fold{fold+1}.pth')
                 
                 if self.save_best and val_acc > self.best_acc:
                     self.best_acc = val_acc
-                    # torch.save(self.model.state_dict(), self.save_path)
                     self.best_fold_metrics = (fold_train_losses, fold_train_accs, fold_val_losses, fold_val_accs)
 
             if self.best_metrics:
                 self.best_results = self.add_row(self.best_metrics)
         
-
         column_means = self.best_results.drop(columns=["fold Number"]).mean()
         average_row = pd.DataFrame([["Average"] + column_means.tolist()], columns=self.best_results.columns)
         self.best_results = pd.concat([self.best_results, average_row], ignore_index=True)
         print(self.best_results)
 
-
-
-        # if self.best_fold_metrics:
-        #     self.visualizer.plot_loss_accuracy(*self.best_fold_metrics)
-        # self.plot_confusion_matrix()
-        # self.plot_roc_curve()
+        if self.best_fold_metrics:
+            self.visualizer.plot_loss(self.best_fold_metrics[0], self.best_fold_metrics[2])
+            self.visualizer.plot_accuracy(self.best_fold_metrics[1], self.best_fold_metrics[3])
 
     def validate(self, val_loader):
         self.model.eval()

@@ -154,17 +154,17 @@ class EEGDataLoader(Dataset):
 
         filtered_data = self._butterworth_lowpass_filter(all_trials, cutoff=50)
         downsampled_data = self._downsample(filtered_data)
-        # normalized_data = self._min_max_normalization_per_signal(downsampled_data)
+        normalized_data = self._min_max_normalization_per_signal(downsampled_data)
 
-        print(f"dataset shape: {downsampled_data.shape}, labels shape: {all_labels.shape}")
+        print(f"dataset shape: {normalized_data.shape}, labels shape: {all_labels.shape}")
 
-        return downsampled_data, all_labels
+        return normalized_data, all_labels
 
     def __getitem__(self, idx):
 
-        adjacency_matrix =  torch.tensor(GMatrixCalculator._compute_G_matrix(self.data[idx]), dtype=torch.float32)  
-        feature_matrix = torch.tensor(self.data[idx].copy(), dtype=torch.float32)  
-        label = torch.tensor(self.labels[idx], dtype=torch.long) 
+        adjacency_matrix =  torch.as_tensor(GMatrixCalculator._compute_G_matrix(self.data[idx]), dtype=torch.float32)  
+        feature_matrix = torch.as_tensor(self.data[idx].copy(), dtype=torch.float32)  
+        label = torch.as_tensor(self.labels[idx], dtype=torch.long) 
 
         return feature_matrix, adjacency_matrix, label - 1
     
