@@ -1,7 +1,7 @@
 from  data_loader import EEGDataLoader
 from AGACN import AGACN
-from trainer import Trainer
-import numpy as np
+from trainer_ import Trainer
+
 
 if __name__ == '__main__':
     # /content/decoding-lilingual-EEG-signals/Processed_Data_
@@ -9,5 +9,5 @@ if __name__ == '__main__':
 
     model = AGACN(num_timepoints=2000, num_classes=9)
     model.count_parameters()
-    trainer = Trainer(model, dataset, lr=0.0001, epochs=10, batch_size=64, num_folds=5)
+    trainer = Trainer(model, dataset, lr=0.0001, epochs=10, batch_size=64)
     trainer.train()
