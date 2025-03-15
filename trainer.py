@@ -94,24 +94,23 @@ class Trainer:
 
     def validate(self, val_loader):
         self.model.eval()
-        val_loss = 0
-        all_preds, all_labels = [], []
-        
+        device = next(self.model.parameters()).device
+        self.model.to(device)
+
+        val_loss, all_preds, all_labels = 0, [], []
+
         with torch.no_grad():
-            for feature_matrix, adjacency_matrix, labels in val_loader:
-                output = self.model(feature_matrix, adjacency_matrix)  # Keep raw logits
-                loss = self.criterion(output, labels)
-                val_loss += loss.item()
-                
-                pred = output.argmax(dim=1)
-                
-                all_preds.extend(pred.cpu().numpy())
+            for features, adj, labels in val_loader:
+                features, adj, labels = features.to(device), adj.to(device), labels.to(device)
+
+                output = self.model(features, adj)
+                val_loss += self.criterion(output, labels).item()
+
+                all_preds.extend(output.argmax(dim=1).cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
-                
-        self.all_preds.extend(all_preds)
-        self.all_labels.extend(all_labels)
-        
+
         return val_loss / len(val_loader), accuracy_score(all_labels, all_preds), all_preds, all_labels
+
 
     def add_row(self, data):
         new_row = pd.DataFrame([data], columns=self.best_results.columns)  # Create a new DataFrame row
