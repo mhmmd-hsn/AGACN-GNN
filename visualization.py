@@ -52,7 +52,7 @@ class Visualization:
         nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color='red', alpha=0.8)
 
         plt.show()
-    def plot_loss(self, train_losses, val_losses):
+    def plot_loss(self, train_losses, val_losses, save_path="loss_plot.png"):
         """
         Plots the training and validation loss over epochs.
         """
@@ -64,9 +64,10 @@ class Visualization:
         plt.title('Training and Validation Loss Over Epochs')
         plt.legend()
         plt.grid()
-        plt.show()
+        plt.savefig(save_path) 
+        # plt.show()
 
-    def plot_accuracy(self, train_accs, val_accs):
+    def plot_accuracy(self, train_accs, val_accs, save_path="accuracy_plot.png"):
         """
         Plots the training and validation accuarcy over epochs.
         """
@@ -78,4 +79,5 @@ class Visualization:
         plt.title('Training and Validation accuracy Over Epochs')
         plt.legend()
         plt.grid()
-        plt.show()
+        plt.savefig(save_path) 
+        # plt.show()
