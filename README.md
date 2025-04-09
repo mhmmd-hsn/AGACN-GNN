@@ -1,4 +1,4 @@
-# Decoding Lingual EEG Signals using Graph Neural Networks
+# Decoding Bilingual EEG Signals With Complex Semantics Using Adaptive Graph Attention Convolutional Network
 
 ## 📌 Overview
 
